@@ -19,9 +19,9 @@ function loop() {
   local sln_name
   local bin_path
 
-  if wln_path=$(get_sys_net_path "${wln_name}"); then
+  if wln_path=$(build_sys_net_path "${wln_name}"); then
     wln_code=$(
-      get_sys_net_file_value "${wln_name}" 'carrier' 0
+      value_sys_net_file "${wln_name}" 'carrier' 0
     )
 
     if [[ ${wln_code} -eq 1 ]]; then
@@ -29,9 +29,9 @@ function loop() {
     fi
   fi
 
-  if eln_path=$(get_sys_net_path "${eln_name}"); then
+  if eln_path=$(build_sys_net_path "${eln_name}"); then
     eln_code=$(
-      get_sys_net_file_value "${eln_name}" 'carrier' 0
+      value_sys_net_file "${eln_name}" 'carrier' 0
     )
 
     if [[ ${eln_code} -eq 1 ]]; then
@@ -57,7 +57,7 @@ function loop() {
   if [[ ! -x ${bin_path} ]]; then
     out_line_std \
       "$(printf 'Failures for device %5s' "${sln_name}")" \
-      "$(get_sys_net_path "${sln_name}")" \
+      "$(build_sys_net_path "${sln_name}")" \
       "${bin_path}" \
       "could not locate executable at expected path..."
     return 6
@@ -65,7 +65,7 @@ function loop() {
 
   out_line_std \
       "$(printf 'Selected SLN device %5s' "${sln_name}")" \
-      "$(get_sys_net_path "${sln_name}")" \
+      "$(build_sys_net_path "${sln_name}")" \
       "${bin_path}" \
       "executing in 5 seconds..."
 
