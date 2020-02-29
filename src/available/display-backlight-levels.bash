@@ -9,20 +9,24 @@ readonly _DPLY_BL_LEVELS_PATH="$(
 
 source "${_DPLY_BL_LEVELS_PATH}/../../lib/inc-all.bash"
 
-function normalize_input_level() {
-  local input="${1:-100}"
+function normalize_puts_level_from_input() {
+  local input_val="${1}"
+  local precision="${2:-2}"
 
-  if [[ ${input} -gt 100 ]]; then
-    input=100
-  fi
+  [[ ${input_val} -gt 100 ]] && input_val=100
+  [[ ${input_val} -lt   0 ]] && input_val=0
 
-  if [[ ${input} -lt 0 ]]; then
-    input=0
-  fi
+  number_floor $(
+    number_base_switch "${input_val}" 100 254 ${precision}
+  )
+}
 
-  printf '%s' $(
-    printf '%d * 255 / 100\n' ${input} | bc 2> /dev/null \
-      || printf '%s' "${input}"
+function normalize_gets_level_from_reads() {
+  local input_val="${1}"
+  local precision="${2:-4}"
+
+  number_ceil $(
+    number_base_switch "${input_val}" 254 100 ${precision}
   )
 }
 
@@ -36,16 +40,19 @@ function out_dply_level() {
 
   out_line_std \
     'Brightness level' \
-    "$(printf -- '%3d%%' "${level}")" \
+    "$(normalize_gets_level_from_reads "${level}")%" \
     "${extra}"
 }
 
 function main() {
   out_dply_level 'prior assigned value'
 
-  updts_sys_file "$(
-    normalize_input_level "${1}"
-  )" 'class' 'backlight' 'rpi_backlight' 'brightness'
+  updts_sys_file \
+    "$(normalize_puts_level_from_input $(number_round "${1}" 0))" \
+    'class' \
+    'backlight' \
+    'rpi_backlight' \
+    'brightness'
 
   out_dply_level 'newly assigned value'
 }
