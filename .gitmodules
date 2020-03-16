@@ -1,0 +1,3 @@
+[submodule "lib/geekwork-com-x730-script"]
+	path = lib/geekwork-com-x730-script
+	url = https://github.com/geekworm-com/x730-script.git
