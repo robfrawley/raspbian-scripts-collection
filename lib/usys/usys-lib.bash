@@ -1,37 +1,60 @@
 #!/bin/bash
 
-function build_sys_path() {
+function build_sys_path_force() {
   local sys_path="/sys"
+  local sys_code=0
 
   for p in "${@}"; do
     sys_path+="/${p}"
   done
 
-  if [[ ! -d ${sys_path} ]]; then
-    return 110
+  [[ ! -e ${sys_path} ]] && sys_code=110
+
+  out_printf '%s' "${sys_path}"
+
+  return ${sys_code}
+}
+
+function build_sys_path() {
+  local sys_path
+
+  if ! sys_path="$(build_sys_path_force "${@}")"; then
+    return ${PIPESTATUS[0]}
   fi
 
-  printf -- '%s' "${sys_path}"
+  out_printf '%s' "${sys_path}"
+}
+
+function build_sys_file_force() {
+  local sys_args=("${@}")
+  local sys_root
+  local sys_path
+  local sys_code=0
+
+  if ! sys_root="$(build_sys_path_force "${@:1:$((${#} - 1))}")"; then
+    sys_code=111
+  fi
+
+  sys_path="$(
+    out_printf '%s/%s' "${sys_root}" "${sys_args[-1]}"
+  )"
+
+  [[ ! -f ${sys_path} ]] && sys_code=112
+
+  out_printf '%s' "${sys_path}"
+
+  return ${sys_code}
 }
 
 function build_sys_file() {
   local sys_args=("${@}")
-  local sys_root
   local sys_path
 
-  if ! sys_root="$(build_sys_path "${@:1:$((${#} - 1))}")"; then
-    return 111
+  if ! sys_path="$(build_sys_file_force "${sys_args[@]}")"; then
+    return ${PIPESTATUS[0]}
   fi
 
-  sys_path="$(
-    printf -- '%s/%s' "${sys_root}" "${sys_args[-1]}"
-  )"
-
-  if [[ ! -f ${sys_path} ]]; then
-    return 112
-  fi
-
-  printf -- '%s' "${sys_path}"
+  out_printf '%s' "${sys_path}"
 }
 
 function value_sys_file() {
@@ -63,7 +86,7 @@ function build_sys_net_path() {
     return 120
   fi
 
-  printf -- '%s' "${sys_path}"
+  out_printf '%s' "${sys_path}"
 }
 
 function build_sys_net_file() {
@@ -80,7 +103,7 @@ function build_sys_net_file() {
     return 122
   fi
 
-  printf -- '%s' "${sys_path}"
+  out_printf '%s' "${sys_path}"
 }
 
 function value_sys_net_file() {
@@ -92,5 +115,5 @@ function value_sys_net_file() {
     return 123
   fi
 
-  printf -- '%s' "${sys_vals}"
+  out_printf '%s' "${sys_vals}"
 }

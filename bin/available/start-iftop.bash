@@ -1,14 +1,33 @@
 #!/bin/bash
 
-readonly _START_IFTOP_FILE="$(
+
+##
+## READONLY INTERNAL VARIABLE DEFINITIONS
+##
+
+readonly _START_IFTOP_LEVELS_FILE="$(
   realpath -e "${BASH_SOURCE[0]}" 2> /dev/null || printf -- '%s' "${BASH_SOURCE[0]}"
 )"
-readonly _START_IFTOP_PATH="$(
-  dirname "${_START_IFTOP_FILE}" 2> /dev/null
+
+readonly _START_IFTOP_LEVELS_PATH="$(
+  dirname "${_START_IFTOP_LEVELS_FILE}" 2> /dev/null
 )"
 
-source "${_START_IFTOP_PATH}/../../lib/inc-all.bash"
 
+##
+## SOURCE VENDOR DEPENDENCIES
+##
+
+source "${_START_IFTOP_LEVELS_PATH}/../../lib/inc-all.bash"
+
+
+##
+## APP FUNCTION DEFINITIONS
+##
+
+#
+# perform main function loop
+#
 function loop() {
   local eln_name="${1:-eth0}"
   local wln_name="${2:-wlan0}"
@@ -39,46 +58,57 @@ function loop() {
     fi
   fi
 
-  out_line_std \
-    "$(printf 'State of ELN device %5s' "${eln_name}")" \
-    "$(bool_to_string ${eln_code})"
-  out_line_std \
-    "$(printf 'State of WLN device %5s' "${wln_name}")" \
-    "$(bool_to_string ${wln_code})"
+  out_info \
+    'state of ELN device %5s: %s' \
+    "${eln_name}" \
+    "$(bool_to_string_verbose ${eln_code})"
+
+  out_info \
+    'state of WLN device %5s: %s' \
+    "${wln_name}" \
+    "$(bool_to_string_verbose ${wln_code})"
 
   if [[ -z ${sln_name} ]]; then
-    out_line_std \
-      'Failed to locate any enabled interfaces...\n'
+    out_fail 'interface resolution failure (unable to find any enabled interface devices)!'
     return 5
   fi
 
-  bin_path="${_LIB_CALLER_ROOT}/../activated/start-iftop-${sln_name}"
+  bin_path="${_BINS_PATH_REAL}/start-iftop-${sln_name}"
 
   if [[ ! -x ${bin_path} ]]; then
-    out_line_std \
-      "$(printf 'Failures for device %5s' "${sln_name}")" \
+    out_fail \
+      'fail for SLN device %5s: "%s" (with command "%s")' \
+      "${sln_name}" \
       "$(build_sys_net_path "${sln_name}")" \
-      "${bin_path}" \
-      "could not locate executable at expected path..."
+      "${bin_path}"
     return 6
   fi
 
-  out_line_std \
-      "$(printf 'Selected SLN device %5s' "${sln_name}")" \
-      "$(build_sys_net_path "${sln_name}")" \
-      "${bin_path}" \
-      "executing in 5 seconds..."
+  out_info \
+    'selected SLN device %5s: "%s" (with command "%s")' \
+    "${sln_name}" \
+    "$(build_sys_net_path "${sln_name}")" \
+    "${bin_path}"
 
   sleep 5
 
   ${bin_path} 2> /dev/null
 }
 
+
+#
+# main function definition
+#
 function main() {
   while true; do
     loop "${@}"
     sleep 2
   done
 }
+
+
+##
+## INVOKE MAIN FUNCTION DEFINITION
+##
 
 main "${@}"
